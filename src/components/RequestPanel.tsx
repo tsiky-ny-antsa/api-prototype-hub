@@ -13,9 +13,10 @@ type RequestState = "idle" | "sending" | "success" | "error";
 
 interface RequestPanelProps {
   endpoint: ApiEndpoint | null;
+  token: string | null;
 }
 
-const RequestPanel = ({ endpoint }: RequestPanelProps) => {
+const RequestPanel = ({ endpoint, token }: RequestPanelProps) => {
   const [paramValues, setParamValues] = useState<Record<string, string>>({});
   const [requestState, setRequestState] = useState<RequestState>("idle");
   const [response, setResponse] = useState<string | null>(null);
