@@ -31,22 +31,35 @@ const AuthPanel = ({ token, onTokenChange }: AuthPanelProps) => {
   const [password, setPassword] = useState("");
   const [manualToken, setManualToken] = useState("");
   const [loading, setLoading] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
 
   const decoded = useMemo(() => (token ? decodeJwt(token) : null), [token]);
 
   const handleQuickLogin = useCallback(async () => {
     if (!email || !password) return;
     setLoading(true);
+    setLoginError(null);
 
-    // Simulate login — returns a fake JWT
-    await new Promise((r) => setTimeout(r, 800));
-    const now = Math.floor(Date.now() / 1000);
-    const fakeJwt = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.${btoa(
-      JSON.stringify({ email, role: "user", iat: now, exp: now + 900 })
-    )}.fake_signature`;
-    onTokenChange(fakeJwt);
+    try {
+      const { API_BASE_URL } = await import("@/lib/api-endpoints");
+      const res = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+        credentials: "include",
+      });
+      const data = await res.json();
+      if (res.ok && data.token) {
+        onTokenChange(data.token);
+        setExpanded(false);
+      } else {
+        setLoginError(data.message || `Erreur ${res.status}`);
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Erreur réseau";
+      setLoginError(msg);
+    }
     setLoading(false);
-    setExpanded(false);
   }, [email, password, onTokenChange]);
 
   const handleSetManualToken = useCallback(() => {
@@ -150,6 +163,9 @@ const AuthPanel = ({ token, onTokenChange }: AuthPanelProps) => {
                   >
                     {loading ? "Connexion..." : "Se connecter"}
                   </button>
+                  {loginError && (
+                    <p className="font-mono text-[10px] text-destructive">{loginError}</p>
+                  )}
                 </div>
               ) : (
                 <div className="space-y-2">
