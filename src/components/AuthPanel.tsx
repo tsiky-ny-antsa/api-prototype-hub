@@ -40,8 +40,9 @@ const AuthPanel = ({ token, onTokenChange }: AuthPanelProps) => {
 
     // Simulate login — returns a fake JWT
     await new Promise((r) => setTimeout(r, 800));
+    const now = Math.floor(Date.now() / 1000);
     const fakeJwt = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.${btoa(
-      JSON.stringify({ email, role: "user", iat: Date.now() })
+      JSON.stringify({ email, role: "user", iat: now, exp: now + 900 })
     )}.fake_signature`;
     onTokenChange(fakeJwt);
     setLoading(false);
