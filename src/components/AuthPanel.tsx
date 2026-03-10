@@ -169,6 +169,44 @@ const AuthPanel = ({ token, onTokenChange }: AuthPanelProps) => {
                 </div>
               )}
 
+              {token && decoded && (
+                <div className="mt-3 border border-border rounded bg-secondary/50 p-3">
+                  <h4 className="text-[10px] font-mono font-medium text-muted-foreground uppercase tracking-wider mb-2">
+                    Payload décodé
+                  </h4>
+                  <div className="space-y-1.5">
+                    {decoded.email && (
+                      <div className="flex items-center justify-between">
+                        <span className="font-mono text-[10px] text-muted-foreground">email</span>
+                        <span className="font-mono text-[10px] text-foreground">{decoded.email}</span>
+                      </div>
+                    )}
+                    {decoded.role && (
+                      <div className="flex items-center justify-between">
+                        <span className="font-mono text-[10px] text-muted-foreground">role</span>
+                        <span className="font-mono text-[10px] text-primary">{decoded.role}</span>
+                      </div>
+                    )}
+                    {decoded.iat && (
+                      <div className="flex items-center justify-between">
+                        <span className="font-mono text-[10px] text-muted-foreground">émis</span>
+                        <span className="font-mono text-[10px] text-foreground">
+                          {new Date(decoded.iat).toLocaleTimeString("fr-FR")}
+                        </span>
+                      </div>
+                    )}
+                    {decoded.exp && (
+                      <div className="flex items-center justify-between">
+                        <span className="font-mono text-[10px] text-muted-foreground">expire</span>
+                        <span className={`font-mono text-[10px] ${decoded.exp * 1000 < Date.now() ? "text-destructive" : "text-success"}`}>
+                          {new Date(decoded.exp * 1000).toLocaleTimeString("fr-FR")}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {token && (
                 <button
                   onClick={handleClear}
