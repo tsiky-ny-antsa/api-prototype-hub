@@ -1,5 +1,23 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+
+interface JwtPayload {
+  email?: string;
+  role?: string;
+  exp?: number;
+  iat?: number;
+  [key: string]: unknown;
+}
+
+function decodeJwt(token: string): JwtPayload | null {
+  try {
+    const parts = token.split(".");
+    if (parts.length !== 3) return null;
+    return JSON.parse(atob(parts[1]));
+  } catch {
+    return null;
+  }
+}
 
 interface AuthPanelProps {
   token: string | null;
@@ -14,14 +32,17 @@ const AuthPanel = ({ token, onTokenChange }: AuthPanelProps) => {
   const [manualToken, setManualToken] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const decoded = useMemo(() => (token ? decodeJwt(token) : null), [token]);
+
   const handleQuickLogin = useCallback(async () => {
     if (!email || !password) return;
     setLoading(true);
 
     // Simulate login — returns a fake JWT
     await new Promise((r) => setTimeout(r, 800));
+    const now = Math.floor(Date.now() / 1000);
     const fakeJwt = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.${btoa(
-      JSON.stringify({ email, role: "user", iat: Date.now() })
+      JSON.stringify({ email, role: "user", iat: now, exp: now + 900 })
     )}.fake_signature`;
     onTokenChange(fakeJwt);
     setLoading(false);
@@ -146,6 +167,44 @@ const AuthPanel = ({ token, onTokenChange }: AuthPanelProps) => {
                   >
                     Appliquer le token
                   </button>
+                </div>
+              )}
+
+              {token && decoded && (
+                <div className="mt-3 border border-border rounded bg-secondary/50 p-3">
+                  <h4 className="text-[10px] font-mono font-medium text-muted-foreground uppercase tracking-wider mb-2">
+                    Payload décodé
+                  </h4>
+                  <div className="space-y-1.5">
+                    {decoded.email && (
+                      <div className="flex items-center justify-between">
+                        <span className="font-mono text-[10px] text-muted-foreground">email</span>
+                        <span className="font-mono text-[10px] text-foreground">{decoded.email}</span>
+                      </div>
+                    )}
+                    {decoded.role && (
+                      <div className="flex items-center justify-between">
+                        <span className="font-mono text-[10px] text-muted-foreground">role</span>
+                        <span className="font-mono text-[10px] text-primary">{decoded.role}</span>
+                      </div>
+                    )}
+                    {decoded.iat && (
+                      <div className="flex items-center justify-between">
+                        <span className="font-mono text-[10px] text-muted-foreground">émis</span>
+                        <span className="font-mono text-[10px] text-foreground">
+                          {new Date(decoded.iat).toLocaleTimeString("fr-FR")}
+                        </span>
+                      </div>
+                    )}
+                    {decoded.exp && (
+                      <div className="flex items-center justify-between">
+                        <span className="font-mono text-[10px] text-muted-foreground">expire</span>
+                        <span className={`font-mono text-[10px] ${decoded.exp * 1000 < Date.now() ? "text-destructive" : "text-success"}`}>
+                          {new Date(decoded.exp * 1000).toLocaleTimeString("fr-FR")}
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 
