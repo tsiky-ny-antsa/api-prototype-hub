@@ -31,6 +31,7 @@ const AuthPanel = ({ token, onTokenChange }: AuthPanelProps) => {
   const [password, setPassword] = useState("");
   const [manualToken, setManualToken] = useState("");
   const [loading, setLoading] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
 
   const decoded = useMemo(() => (token ? decodeJwt(token) : null), [token]);
 
