@@ -163,6 +163,9 @@ const AuthPanel = ({ token, onTokenChange }: AuthPanelProps) => {
                   >
                     {loading ? "Connexion..." : "Se connecter"}
                   </button>
+                  {loginError && (
+                    <p className="font-mono text-[10px] text-destructive">{loginError}</p>
+                  )}
                 </div>
               ) : (
                 <div className="space-y-2">
