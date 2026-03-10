@@ -31,17 +31,77 @@ const RequestPanel = ({ endpoint, token }: RequestPanelProps) => {
     setRequestState("sending");
     setResponse(null);
 
-    // Simulate API call with delay
-    await new Promise((r) => setTimeout(r, 1200 + Math.random() * 800));
+    try {
+      const { API_BASE_URL } = await import("@/lib/api-endpoints");
 
-    // Simulate response
-    setStatusCode(200);
-    setResponse(endpoint.exampleResponse);
-    setRequestState("success");
+      // Build URL with path params
+      let url = API_BASE_URL + endpoint.path;
+      const pathParams = endpoint.params.filter((p) => p.type === "path");
+      for (const p of pathParams) {
+        url = url.replace(`:${p.name}`, paramValues[p.name] || p.example || "");
+      }
 
-    // Reset to idle after flash
+      // Add query params
+      const queryParams = endpoint.params.filter((p) => p.type === "query");
+      const qp = new URLSearchParams();
+      for (const p of queryParams) {
+        const val = paramValues[p.name];
+        if (val) qp.set(p.name, val);
+      }
+      const qs = qp.toString();
+      if (qs) url += `?${qs}`;
+
+      // Build headers
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (endpoint.auth !== "Public" && token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
+      // Build body
+      const bodyParams = endpoint.params.filter((p) => p.type === "body");
+      let body: string | undefined;
+      if (bodyParams.length > 0 && (endpoint.method === "POST" || endpoint.method === "PUT")) {
+        const bodyObj: Record<string, unknown> = {};
+        for (const p of bodyParams) {
+          const val = paramValues[p.name];
+          if (val !== undefined && val !== "") {
+            // Try to parse numbers/booleans
+            if (val === "true") bodyObj[p.name] = true;
+            else if (val === "false") bodyObj[p.name] = false;
+            else if (!isNaN(Number(val)) && val.trim() !== "") bodyObj[p.name] = Number(val);
+            else bodyObj[p.name] = val;
+          }
+        }
+        body = JSON.stringify(bodyObj);
+      }
+
+      const res = await fetch(url, {
+        method: endpoint.method,
+        headers,
+        body,
+        credentials: "include",
+      });
+
+      const text = await res.text();
+      let formatted: string;
+      try {
+        formatted = JSON.stringify(JSON.parse(text), null, 2);
+      } catch {
+        formatted = text;
+      }
+
+      setStatusCode(res.status);
+      setResponse(formatted);
+      setRequestState(res.ok ? "success" : "error");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Erreur réseau";
+      setStatusCode(0);
+      setResponse(JSON.stringify({ error: message }, null, 2));
+      setRequestState("error");
+    }
+
     setTimeout(() => setRequestState("idle"), 600);
-  }, [endpoint]);
+  }, [endpoint, paramValues, token]);
 
   if (!endpoint) {
     return (
