@@ -127,6 +127,27 @@ const RequestPanel = ({ endpoint, token }: RequestPanelProps) => {
             {endpoint.description}
           </p>
 
+          {/* Auto-injected Bearer header */}
+          {endpoint.auth !== "Public" && (
+            <div className="mb-5">
+              <h3 className="text-[10px] font-mono font-medium text-muted-foreground uppercase tracking-wider mb-3">
+                Authorization
+              </h3>
+              <div className="flex items-center gap-2 bg-secondary border border-border rounded px-3 py-2">
+                <span className="font-mono text-[10px] text-muted-foreground shrink-0">Bearer</span>
+                {token ? (
+                  <span className="font-mono text-[10px] text-success truncate">
+                    ···{token.slice(-20)}
+                  </span>
+                ) : (
+                  <span className="font-mono text-[10px] text-destructive">
+                    Token manquant — authentifiez-vous
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+
           {pathParams.length > 0 && (
             <ParamSection
               title="Paramètres de chemin"
