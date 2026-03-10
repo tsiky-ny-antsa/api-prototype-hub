@@ -32,6 +32,8 @@ const AuthPanel = ({ token, onTokenChange }: AuthPanelProps) => {
   const [manualToken, setManualToken] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const decoded = useMemo(() => (token ? decodeJwt(token) : null), [token]);
+
   const handleQuickLogin = useCallback(async () => {
     if (!email || !password) return;
     setLoading(true);
