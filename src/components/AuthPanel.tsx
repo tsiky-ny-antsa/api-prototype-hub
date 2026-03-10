@@ -1,5 +1,23 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+
+interface JwtPayload {
+  email?: string;
+  role?: string;
+  exp?: number;
+  iat?: number;
+  [key: string]: unknown;
+}
+
+function decodeJwt(token: string): JwtPayload | null {
+  try {
+    const parts = token.split(".");
+    if (parts.length !== 3) return null;
+    return JSON.parse(atob(parts[1]));
+  } catch {
+    return null;
+  }
+}
 
 interface AuthPanelProps {
   token: string | null;
